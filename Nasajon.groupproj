@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{34AFD1D3-44D8-4462-9102-50045EB54ECC}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ProvaTecnica.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ProvaTecnica">
+        <MSBuild Projects="ProvaTecnica.dproj"/>
+    </Target>
+    <Target Name="ProvaTecnica:Clean">
+        <MSBuild Projects="ProvaTecnica.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ProvaTecnica:Make">
+        <MSBuild Projects="ProvaTecnica.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ProvaTecnica"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ProvaTecnica:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ProvaTecnica:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
