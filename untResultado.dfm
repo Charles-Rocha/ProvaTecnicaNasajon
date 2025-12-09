@@ -4,7 +4,7 @@ object frmResultado: TfrmResultado
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Resultado'
   ClientHeight = 511
-  ClientWidth = 584
+  ClientWidth = 684
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,14 +17,11 @@ object frmResultado: TfrmResultado
   object mmoResultado: TMemo
     Left = 0
     Top = 0
-    Width = 584
+    Width = 684
     Height = 511
     Align = alClient
     ScrollBars = ssBoth
     TabOrder = 0
-    ExplicitLeft = 64
-    ExplicitTop = 64
-    ExplicitWidth = 329
-    ExplicitHeight = 217
+    ExplicitWidth = 584
   end
 end

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Imaging.jpeg, Vcl.ExtCtrls, Vcl.Menus, System.JSON,
-  REST.Client, REST.Types, System.Generics.Collections;
+  REST.Client, REST.Types, System.Generics.Collections, NHunspell, Vcl.StdCtrls;
 
 type
   TTipoRegiao = (eNorte, eNordeste, eCentroOeste, eSudeste, eSul);
@@ -29,14 +29,17 @@ type
     FlstArquivoCSV: TStringList;
     FlstResultadoCSV: TStringList;
     FlstMediasPorRegiao: TStringList;
+    FlstDicionario: TStringList;
 
     procedure CarregarArquivoCSV;
+    procedure CarregarDicionario;
     procedure CarregarMunicipiosIBGE;
-
     procedure EnvioEstatisticasParaCorrecao(JObject: TJSONObject);
     function CalcularMediasPorRegiao(pRegiao: string): double;
     procedure MontarJsonDeCorrecao(pTotalMunicipios, pTotalOk,
       pTotalNaoEncontrados, pTotalErroApi, pPopTotalOk: integer);
+    function RetirarAcentos(const Texto: string): string;
+    function VerificarDigitacaoMunicipio(pMunicipioInput: string): string;
   public
     { Public declarations }
   end;
@@ -51,6 +54,21 @@ implementation
 uses untSobre, untResultado;
 
 { TfrmProvaTecnica }
+
+function TfrmProvaTecnica.RetirarAcentos(const Texto: string): string;
+const
+  Acentos = 'áéíóúÁÉÍÓÚàèìòùÀÈÌÒÙäëïöüÄËÏÖÜãõÃÕâêîôûÂÊÎÔÛçÇñÑ';
+  Normais = 'aeiouAEIOUaeiouAEIOUaeiouAEIOUaoAOaeiouAEIOUcCnN';
+var
+  a: Integer;
+begin
+  Result := '';
+  for a := 1 to Length(Texto) do
+    if Pos(Texto[a], Acentos) > 0 then
+      Result := Result + Normais[Pos(Texto[a], Acentos)]
+    else
+      Result := Result + Texto[a];
+end;
 
 function TfrmProvaTecnica.CalcularMediasPorRegiao(pRegiao: string): double;
 var
@@ -170,14 +188,35 @@ begin
   FlstArquivoCSV.LoadFromFile(sCaminhoArquivo);
 end;
 
+procedure TfrmProvaTecnica.CarregarDicionario;
+var
+  sCaminhoArquivo: string;
+  i: integer;
+begin
+  sCaminhoArquivo := ExtractFilePath(application.Exename) + 'Dicionarios\pt-BR.oxt';
+  Hunspell.ReadOXT(sCaminhoArquivo);
+  FlstDicionario.BeginUpdate;
+
+  for i := 0 to Hunspell.SpellDictionaryCount-1 do
+    begin
+      FlstDicionario.AddObject(Format('%s - %s Version: %s', [Hunspell.SpellDictionaries[i].LanguageName,
+                                                 Hunspell.SpellDictionaries[i].DisplayName,
+                                                 Hunspell.SpellDictionaries[i].Version]),
+                                                 Hunspell.SpellDictionaries[i]);
+    end;
+
+  Hunspell.SpellDictionaries[0].Active := true;
+  Hunspell.UpdateAndLoadDictionaries;
+  FlstDicionario.EndUpdate;
+end;
+
 procedure TfrmProvaTecnica.CarregarMunicipiosIBGE;
 var
   sResultado, sLinha, sMunicipioInput, sMunicipioIBGE, sPopulacaoInput, sPopulacaoIBGE: string;
-  sIdIBGE, sUF, sRegiao, sRegiaoAnterior, sMunicipioTemp, sOk: string;
+  sIdIBGE, sUF, sRegiao, sRegiaoAnterior, sMunicipioTemp: string;
   RESTClientMunicipiosIBGEGet: TRestClient;
   ReqMunicipiosIBGEGet: TRestRequest;
   RESTResponseMunicipiosIBGEGet: TRestResponse;
-
   jSubObj1, jSubObj2, jSubObj3, jSubObj4, jSubObj5: TJSONObject;
   jv1, jv2, jv3, jv4: TJSONValue;
   JSArray: TJSONArray;
@@ -223,6 +262,8 @@ begin
               bEncontrado := false;
               sLinha := FlstArquivoCSV.Strings[i];
               sMunicipioInput := Trim(copy(sLinha, 1, pos(',', sLinha)-1));
+              sMunicipioInput := VerificarDigitacaoMunicipio(sMunicipioInput);
+              sMunicipioInput := RetirarAcentos(sMunicipioInput);
               sPopulacaoInput := Trim(copy(sLinha, pos(',', sLinha)+1, length(sLinha)));
               iTotalMunicipios := iTotalMunicipios + 1;
               sMunicipioIBGE := EmptyStr;
@@ -236,12 +277,10 @@ begin
                   jSubObj1 := (JSArray.Items[j] as TJSONObject);
                   sIdIBGE := StringReplace(jSubObj1.Get('id').JsonValue.ToString, '"', EmptyStr, [rfReplaceAll]);
                   sMunicipioIBGE := StringReplace(jSubObj1.Get('nome').JsonValue.ToString, '"', EmptyStr, [rfReplaceAll]);
+                  sMunicipioIBGE := RetirarAcentos(sMunicipioIBGE);
 
                   if sMunicipioIBGE = sMunicipioInput then
                     begin
-                      if sMunicipioIBGE = 'Santo André' then
-                        sOk := 'Ok';
-
                       jv1 := jSubObj1.Get('microrregiao').JsonValue;
                       jSubObj2 := jv1 as TJSONObject;
                       jv2 := jSubObj2.Get('mesorregiao').JsonValue;
@@ -266,6 +305,7 @@ begin
 
                 if not bEncontrado then
                   begin
+                    sMunicipioIBGE := EmptyStr;
                     FlstResultadoCSV.Add(sMunicipioInput + ',' + sPopulacaoInput + ',' + sMunicipioIBGE + ',' +
                                            sUF + ',' + sRegiao + ',' + sIdIBGE + ',' + 'NAO_ENCONTRADO');
                     iTotalNaoEncontrados := iTotalNaoEncontrados + 1;
@@ -328,6 +368,7 @@ begin
   FlstArquivoCSV.Free;
   FlstResultadoCSV.Free;
   FlstMediasPorRegiao.Free;
+  FlstDicionario.Free;
 end;
 
 procedure TfrmProvaTecnica.FormCreate(Sender: TObject);
@@ -337,6 +378,8 @@ begin
   FlstResultadoCSV.Sorted := false;
   FlstResultadoCSV.Duplicates := dupIgnore;
   FlstMediasPorRegiao := TStringList.Create;
+  FlstDicionario := TStringList.Create;
+  CarregarDicionario;
 end;
 
 procedure TfrmProvaTecnica.MontarJsonDeCorrecao(pTotalMunicipios, pTotalOk,
@@ -396,6 +439,41 @@ end;
 procedure TfrmProvaTecnica.Sobre1Click(Sender: TObject);
 begin
   frmSobre.ShowModal;
+end;
+
+function TfrmProvaTecnica.VerificarDigitacaoMunicipio(pMunicipioInput: string): string;
+var
+  tmpStr: TUnicodeStringList;
+  sPalavra, sNovaPalavra: string;
+  lstPalavras: TStringList;
+  i: integer;
+begin  
+  lstPalavras := TStringList.Create;
+  lstPalavras.Delimiter := ' ';
+  lstPalavras.DelimitedText := pMunicipioInput;
+  tmpStr := TUnicodeStringList.create;
+  sNovaPalavra := EmptyStr;
+
+  try
+    for i := 0 to lstPalavras.Count-1 do
+      begin
+        tmpStr.Clear;
+        sPalavra := lstPalavras.Strings[i];
+        TNHSpellDictionary(FlstDicionario.Objects[0]).Suggest(sPalavra, tmpStr);        
+
+        if (tmpStr.count <= 2) or (lstPalavras.Count = 1) then
+          sNovaPalavra := sNovaPalavra + tmpStr.Strings[0] + ' '
+        else
+          sNovaPalavra := sNovaPalavra + sPalavra + ' ';
+      end;
+
+    if lstPalavras.Count = 1 then
+      sNovaPalavra := StringReplace(sNovaPalavra, ' ', EmptyStr, [rfReplaceAll]);
+    result := Trim(sNovaPalavra);
+  finally
+    FreeAndNil(tmpStr);    
+    lstPalavras.Free;
+  end;
 end;
 
 end.

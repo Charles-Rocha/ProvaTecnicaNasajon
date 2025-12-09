@@ -144,6 +144,8 @@
             <Form>frmResultado</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="NHunspell.pas"/>
+        <DCCReference Include="NHunXml.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

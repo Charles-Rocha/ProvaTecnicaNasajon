@@ -4,7 +4,9 @@ uses
   Vcl.Forms,
   untPrincipal in 'untPrincipal.pas' {frmProvaTecnica},
   untSobre in 'untSobre.pas' {frmSobre},
-  untResultado in 'untResultado.pas' {frmResultado};
+  untResultado in 'untResultado.pas' {frmResultado},
+  NHunspell in 'NHunspell.pas',
+  NHunXml in 'NHunXml.pas';
 
 {$R *.res}
 
