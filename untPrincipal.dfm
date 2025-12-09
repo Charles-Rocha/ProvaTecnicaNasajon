@@ -11,7 +11,10 @@ object frmProvaTecnica: TfrmProvaTecnica
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  Menu = MainMenu1
   Position = poDesktopCenter
+  OnClose = FormClose
+  OnCreate = FormCreate
   TextHeight = 15
   object Image1: TImage
     Left = 144
@@ -622,5 +625,27 @@ object frmProvaTecnica: TfrmProvaTecnica
       4AE1DF0578D1E20071AD0C01A5C33934086D459E9B720072E7C76CD211308338
       72288639D424C6E56C4248562B33DA052A610C7C8214B90DDB227662B1189BAD
       AF2E7FC9A7FFD9}
+  end
+  object MainMenu1: TMainMenu
+    Left = 32
+    Top = 16
+    object Arquivo1: TMenuItem
+      Caption = 'Arquivo'
+      object Sair1: TMenuItem
+        Caption = 'Sair'
+        OnClick = Sair1Click
+      end
+    end
+    object ProcessarArquivoCSV1: TMenuItem
+      Caption = 'Processar Arquivo CSV'
+      OnClick = ProcessarArquivoCSV1Click
+    end
+    object Ajuda1: TMenuItem
+      Caption = 'Ajuda'
+      object Sobre1: TMenuItem
+        Caption = 'Sobre'
+        OnClick = Sobre1Click
+      end
+    end
   end
 end
