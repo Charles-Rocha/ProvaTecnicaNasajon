@@ -212,7 +212,7 @@ end;
 
 procedure TfrmProvaTecnica.CarregarMunicipiosIBGE;
 var
-  sResultado, sLinha, sMunicipioInput, sMunicipioIBGE, sPopulacaoInput, sPopulacaoIBGE: string;
+  sResultado, sLinha, sLinhaTemp, sMunicipioInput, sMunicipioIBGE, sPopulacaoInput, sPopulacaoIBGE: string;
   sIdIBGE, sUF, sRegiao, sRegiaoAnterior, sMunicipioTemp: string;
   RESTClientMunicipiosIBGEGet: TRestClient;
   ReqMunicipiosIBGEGet: TRestRequest;
@@ -232,8 +232,7 @@ begin
   iTotalOk := 0;
   iTotalNaoEncontrados := 0;
   iTotalErroApi := 0;
-  iPopTotalOk := 0;
-  bDuplicado := false;
+  iPopTotalOk := 0;  
   lstTemp := TStringList.Create;
   lstTemp.Sorted := true;
   lstTemp.Duplicates := dupIgnore;
@@ -260,6 +259,7 @@ begin
           if i > 0 then
             begin
               bEncontrado := false;
+              bDuplicado := false;
               sLinha := FlstArquivoCSV.Strings[i];
               sMunicipioInput := Trim(copy(sLinha, 1, pos(',', sLinha)-1));
               sMunicipioInput := VerificarDigitacaoMunicipio(sMunicipioInput);
@@ -293,13 +293,44 @@ begin
                       jSubObj5 := jv4 as TJSONObject;
                       sRegiao := StringReplace(jSubObj5.Get('nome').JsonValue.ToString, '"', EmptyStr, [rfReplaceAll]);
 
-                      FlstResultadoCSV.Add(sMunicipioInput + ',' + sPopulacaoInput + ',' + sMunicipioIBGE + ',' +
+                      if FlstResultadoCSV.Count = 1 then
+                        begin
+                          FlstResultadoCSV.Add(sMunicipioInput + ',' + sPopulacaoInput + ',' + sMunicipioIBGE + ',' +
                             sUF + ',' + sRegiao + ',' + sIdIBGE + ',' + 'OK');
+                          FlstMediasPorRegiao.Add(sRegiao + ',' + sPopulacaoInput);
+                          bEncontrado := true;
+                          iTotalOk := iTotalOk + 1;
+                          iPopTotalOk := iPopTotalOk + StrToInt(sPopulacaoInput);
+                        end
+                      else
+                        begin  
+                          for k := 0 to FlstResultadoCSV.Count-1 do
+                            begin
+                              if k > 0 then
+                                begin
+                                  sLinhaTemp := FlstResultadoCSV.Strings[k];
+                                  sMunicipioTemp := copy(sLinhaTemp, 1, pos(',', sLinhaTemp)-1);
+                                  if sMunicipioTemp = sMunicipioInput then
+                                    bDuplicado := true;                                                        
+                                end;
+                            end;
 
-                      FlstMediasPorRegiao.Add(sRegiao + ',' + sPopulacaoInput);
-                      bEncontrado := true;
-                      iTotalOk := iTotalOk + 1;
-                      iPopTotalOk := iPopTotalOk + StrToInt(sPopulacaoInput);
+                          if not bDuplicado then
+                            begin
+                              FlstResultadoCSV.Add(sMunicipioInput + ',' + sPopulacaoInput + ',' + sMunicipioIBGE + ',' +
+                                sUF + ',' + sRegiao + ',' + sIdIBGE + ',' + 'OK');
+                              FlstMediasPorRegiao.Add(sRegiao + ',' + sPopulacaoInput);
+                              bEncontrado := true;
+                              iTotalOk := iTotalOk + 1;
+                              iPopTotalOk := iPopTotalOk + StrToInt(sPopulacaoInput);                              
+                            end
+                          else
+                            begin    
+                              FlstResultadoCSV.Add(sMunicipioInput + ',' + sPopulacaoInput + ',' + sMunicipioIBGE + ',' +
+                                sUF + ',' + sRegiao + ',' + sIdIBGE + ',' + 'AMBIGUO');
+                              FlstMediasPorRegiao.Add(sRegiao + ',' + sPopulacaoInput);
+                            end;
+                        end;                      
                     end;
                 end;
 
