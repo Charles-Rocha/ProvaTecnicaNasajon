@@ -25,9 +25,9 @@
 
 ## 💡 Funcionalidades
 
-- **Processar Arquivo CSV**: Ao clicar nessa opção, será lido o arquivo input.csv que está na pasta raíz da aplicação Arquivos e começara a realização de todo o processo de forma automatizada, 
-passando pelos métodos CarregarArquivoCSV, CarregarMunicipiosIBGE, MontarJsonDeCorrecao, CalcularMediasPorRegiao e EnvioEstatisticasParaCorrecao. Ao final do processo será aberto um segundo
-formulário exibindo o resultado da prova.
+- **Processar Arquivo CSV**: Ao clicar nessa opção, será lido o arquivo **input.csv** que está na pasta raíz da aplicação **Arquivos** e começará a realização de todo o processo de forma automatizada, 
+passando pelos métodos **CarregarArquivoCSV**, **CarregarMunicipiosIBGE**, **MontarJsonDeCorrecao**, **CalcularMediasPorRegiao** e **EnvioEstatisticasParaCorrecao**. Ao final do processo será gravado
+um arquivo **resultado.csv** na pasta **Arquivos** e será aberto um segundo formulário exibindo o resultado da prova.
 
 ## 📄 Licença
 
